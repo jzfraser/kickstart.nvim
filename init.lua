@@ -22,6 +22,17 @@
 
 --]]
 
+-- Used in various places where os matters
+local is_windows = vim.fn.has 'win32' == 1
+
+-- Needed for telescope-fzf-native.nvim
+local telescope_build_command
+if is_windows then
+  telescope_build_command = 'cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release && cmake --install build --prefix build'
+else
+  telescope_build_command = 'make'
+end
+
 -- Set <space> as the leader key
 -- See `:help mapleader`
 --  NOTE: Must happen before plugins are loaded (otherwise wrong leader will be used)
@@ -75,9 +86,12 @@ vim.o.shiftwidth = 2
 -- Save undo history
 vim.o.undofile = true
 
--- Set undo history file location
--- vim.opt.undodir = os.getenv("HOME") .. "/.vim/undodir"
-vim.opt.undodir = os.getenv 'C:\\Users\\Jack\\.vim\\undodir'
+-- Set undo history file location based on OS
+if is_windows then
+  vim.opt.undodir = os.getenv 'USERPROFILE' .. '\\.vim\\undodir'
+else
+  vim.opt.undodir = os.getenv 'HOME' .. '/.vim/undodir'
+end
 
 -- Disable swap and backup files
 vim.o.swapfile = false
@@ -341,7 +355,7 @@ require('lazy').setup({
 
         -- `build` is used to run some command when the plugin is installed/updated.
         -- This is only run then, not every time Neovim starts up.
-        build = 'cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release && cmake --install build --prefix build',
+        build = telescope_build_command,
 
         -- `cond` is a condition used to determine whether this plugin should be
         -- installed and loaded.
@@ -727,12 +741,18 @@ require('lazy').setup({
       }
 
       -- Manually configure ts_ls due to name mismatch
+      local vue_ts_plugin_path
+      if is_windows then
+        vue_ts_plugin_path = 'C:\\Users\\Jack\\AppData\\Roaming\\npm\\node_modules\\@vue\\typescript-plugin'
+      else
+        vue_ts_plugin_path = os.getenv 'HOME' .. '.nvm/versions/node/v18.16.0/lib'
+      end
       require('lspconfig')['ts_ls'].setup {
         init_options = {
           plugins = {
             {
               name = '@vue/typescript-plugin',
-              location = 'C:\\Users\\Jack\\AppData\\Roaming\\npm\\node_modules\\@vue\\typescript-plugin',
+              location = vue_ts_plugin_path,
               languages = { 'javascript', 'javascriptreact', 'typescript', 'typescriptreact', 'vue' },
             },
           },
